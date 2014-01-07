@@ -1,0 +1,22 @@
+SpotifyController
+=================
+
+Basic Spotify controller for Arduino Uno
+
+The SpotifyController directory contains the Atmel Studio 6 project that must be written to the Arduino. This was made for use with the pinout of the Linksprite 16x2 LCD Keypad Shield but should work with any HD44780-compatible LCD as long as you configure the pins correctly.
+
+avr.py is the controlling script that sends commands to the AVR. You'll need pywin32 installed to use it.
+
+=================
+Operation
+
+The AVR's controller program implements a basic command set and support for controlling an HD44780. It waits for a serial connection (9600,8,N,1). Once one is established, the device resets and it is ready for commands.
+
+The Python script finds a running Spotify window and sends commands to write the song and artist to the LCD when they change. If a line is too long, it will scroll one character every .5 seconds and reset at the end.
+
+You can also pause by pressing the Select button on the shield. This will send a media pause keypress to Windows.
+
+1. Load the SpotifyController solution onto the AVR.
+2. Make sure Spotify is running.
+3. Run avr.py.
+4. Watch in amazement as the music title pops up on your LCD screen.
