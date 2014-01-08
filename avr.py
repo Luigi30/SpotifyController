@@ -54,7 +54,7 @@ def main():
 	artist_pos = {'begin':0, 'end':39}
 	song_pos = {'begin':0, 'end':39}
 	
-	spotify = winGuiAuto.findTopWindow("Spotify") #get the handle of the Spotify window
+	spotify = winGuiAuto.findTopWindow("Spotify - ") #get the handle of the Spotify window
 	if not spotify:
 		raise ValueError("Spotify window not found. Is it running?")
 		
