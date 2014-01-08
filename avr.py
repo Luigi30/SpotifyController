@@ -104,7 +104,7 @@ def main():
 			if r == "T":
 				print "Tick"
 	
-		time.sleep(.5)
+		time.sleep(1)
 		
 	avr.close_connection()
 	

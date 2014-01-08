@@ -115,6 +115,8 @@ void process_command(char cmd[]){
 		strcpy(lcd.Line1.buf, (cmd+3)); //send data to the Line buffer
 		lcd.Line1.length = strlen(lcd.Line1.buf); //and the length
 		lcd.Line1.pos = 0; //reset the position
+		lcd.Line1.ticks_at_start = 0;
+		lcd.Line1.ticks_at_end = 0;
 		lcd.put_string(lcd_buffer, LINE_1); //write it to the screen
 	} else if(strstr(cmd, "LP2")){
 		char lcd_buffer[40];
@@ -122,6 +124,8 @@ void process_command(char cmd[]){
 		strcpy(lcd.Line2.buf, (cmd+3));
 		lcd.Line2.length = strlen(lcd.Line2.buf);
 		lcd.Line2.pos = 0;
+		lcd.Line2.ticks_at_start = 0;
+		lcd.Line2.ticks_at_end = 0;
 		lcd.put_string(lcd_buffer, LINE_2);
 	} else {
 		//USART_Send_string("Invalid command.");
