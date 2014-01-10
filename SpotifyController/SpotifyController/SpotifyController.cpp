@@ -7,6 +7,12 @@
 
 #define F_CPU 16000000
 
+#define CMD_SPOTIFY_PAUSE 'P'
+#define CMD_SPOTIFY_BACK 'B'
+#define CMD_SPOTIFY_NEXT 'N'
+#define CMD_SPOTIFY_VOL_UP 'U'
+#define CMD_SPOTIFY_VOL_DOWN 'D'
+
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <avr/io.h>
@@ -55,7 +61,7 @@ int main(void)
 	//	CS10/CS12 high in TCCR1B control register prescales the timer (makes it take longer to tick) by 1024, giving us 15625 ticks per second
 
 	// set compare match register to desired timer count:
-	OCR1A = 7812; //.5 seconds to update
+	OCR1A = 11718;
 	// turn on CTC mode:
 	TCCR1B |= (1 << WGM12);
 	// Set CS10 and CS12 bits for 1024 prescaler:
@@ -87,10 +93,26 @@ int main(void)
 		
 		if(!repeat){
 			if(adc_data > 740 && adc_data < 750){ //the select button is pressed
-				USART_Sendbyte('P'); //send the pause command back to the PC
+				USART_Sendbyte(CMD_SPOTIFY_PAUSE); //send the pause command back to the PC
 				repeat = 1; //don't let this repeat
 				_delay_ms(25); //debounce
-			}	
+			} else if(adc_data > 500 && adc_data < 510){
+				USART_Sendbyte(CMD_SPOTIFY_BACK);
+				repeat = 1;
+				_delay_ms(25);
+			} else if(adc_data == 0 && adc_data < 10){
+				USART_Sendbyte(CMD_SPOTIFY_NEXT);
+				repeat = 1;
+				_delay_ms(25);
+			} else if(adc_data > 140 && adc_data < 150){
+				USART_Sendbyte(CMD_SPOTIFY_VOL_UP);
+				repeat = 1;
+				_delay_ms(25);
+			} else if(adc_data > 320 && adc_data < 330){
+				USART_Sendbyte(CMD_SPOTIFY_VOL_DOWN);
+				repeat = 1;
+				_delay_ms(25);
+			}
 		} else {
 			if(adc_data > 1000){ //if no buttons are pressed
 				repeat = 0; //we can press a button again
@@ -110,23 +132,21 @@ void process_command(char cmd[]){
 	if (strstr(cmd, "LC")) {
 		lcd.clear_display();
 	} else if(strstr(cmd, "LP1")){
+		
 		char lcd_buffer[40];
 		strcpy(lcd_buffer, (cmd+3)); //everything after the command is put into the LCD data buffer
-		strcpy(lcd.Line1.buf, (cmd+3)); //send data to the Line buffer
-		lcd.Line1.length = strlen(lcd.Line1.buf); //and the length
-		lcd.Line1.pos = 0; //reset the position
-		lcd.Line1.ticks_at_start = 0;
-		lcd.Line1.ticks_at_end = 0;
+		lcd.Line1.setup(lcd_buffer, strlen(lcd_buffer));
+		lcd.Line1.reset_counters();
 		lcd.put_string(lcd_buffer, LINE_1); //write it to the screen
+		
 	} else if(strstr(cmd, "LP2")){
+		
 		char lcd_buffer[40];
 		strcpy(lcd_buffer, (cmd+3)); //everything after the command
-		strcpy(lcd.Line2.buf, (cmd+3));
-		lcd.Line2.length = strlen(lcd.Line2.buf);
-		lcd.Line2.pos = 0;
-		lcd.Line2.ticks_at_start = 0;
-		lcd.Line2.ticks_at_end = 0;
-		lcd.put_string(lcd_buffer, LINE_2);
+		lcd.Line2.setup(lcd_buffer, strlen(lcd_buffer));
+		lcd.Line2.reset_counters();
+		lcd.put_string(lcd_buffer, LINE_2); 
+		
 	} else {
 		//USART_Send_string("Invalid command.");
 	}

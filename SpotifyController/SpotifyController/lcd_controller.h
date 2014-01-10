@@ -12,6 +12,7 @@
 #define LINE_1 0x00
 #define LINE_2 0x40
 
+#include <string.h>
 
 class LCD {
 	
@@ -21,6 +22,18 @@ class LCD {
 		int length;
 		int ticks_at_end;
 		int ticks_at_start;
+		
+		void setup(char *str, int len) {
+			strcpy(this->buf, (str+len)); //send data to the Line buffer
+			this->length = len; //and the length
+		}
+		
+		void reset_counters(){
+			this->pos = 0; //reset the position
+			this->ticks_at_start = 0;
+			this->ticks_at_end = 0;
+		};
+		
 	};
 	
 	int LCD_RS;
@@ -41,6 +54,7 @@ class LCD {
 		void set_command_mode();
 		void clear_display();
 		void shift_left();
+		
 		Line Line1;
 		Line Line2;
 };

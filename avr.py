@@ -26,16 +26,21 @@ import serial
 import xml
 import datetime, time
 import time
+import threading
+import Queue
 from elementtree import ElementTree as ET
-
 import winGuiAuto
 
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
 VK_MEDIA_PLAY_PAUSE = 0xB3 #windows key code for media play/pause button
+VK_MEDIA_PREV_TRACK = 0xB1
+VK_MEDIA_NEXT_TRACK = 0xB0
+VK_MEDIA_VOLUME_DOWN = 0xAE
+VK_MEDIA_VOLUME_UP = 0xAF
 COM_PORT = 6 #COM7, zero-indexed
+
+debug = True
+
+q = Queue.Queue()
 
 class AVR:
 	def __init__(self, port):
@@ -70,6 +75,8 @@ def main():
 	song = "Waiting for"
 	artist = "Spotify data"
 	
+	print "Connected!"
+	
 	while True:
 		title = win32gui.GetWindowText(spotify) #get the window title
 		title = title.decode('ascii', 'ignore') #Ignore the stupid unicode dash
@@ -83,31 +90,46 @@ def main():
 			artist = artist #do not update if Spotify is paused
 			
 		cur_lcd_text = {'line1':str((song[song_pos['begin']:song_pos['end']]).ljust(16, ' ')), 'line2':str((artist[artist_pos['begin']:artist_pos['end']]).ljust(16, ' '))}
-		
-		time.sleep(1) #There needs to be a short delay
-		
-		if cur_lcd_text['line1'] != old_lcd_text['line1']:
-			avr.send_command("LP1%s\r\n" % cur_lcd_text['line1'])
+
+		if (cur_lcd_text['line1'] != old_lcd_text['line1']) or (cur_lcd_text['line2'] != old_lcd_text['line2']):
+			t = threading.Thread(target=update_spotify, args=(q, avr, cur_lcd_text))
+			t.start()
 			old_lcd_text['line1'] = cur_lcd_text['line1']
-		
-		time.sleep(1) #There needs to be a short delay
-		
-		if cur_lcd_text['line2'] != old_lcd_text['line2']:
-			avr.send_command("LP2%s\r\n" % cur_lcd_text['line2'])
 			old_lcd_text['line2'] = cur_lcd_text['line2']
 			
 		if avr.connection.inWaiting(): #there's a command in the buffer
+			if debug: print "Got a command"
 			r = avr.connection.read() #read the char in the buffer
 			if r == "P": #if it's P for pause...
-				print "Pause!" #log this
+				if debug: print "Pause!" #log this
 				win32api.keybd_event(VK_MEDIA_PLAY_PAUSE, hwcode) #and send the scancode
-			if r == "T":
-				print "Tick"
+			elif r == "B": #if it's B for back...
+				if debug: print "Previous track!" #log this
+				win32api.keybd_event(VK_MEDIA_PREV_TRACK, hwcode) #and send the scancode
+			elif r == "N": #if it's N for next track...
+				if debug: print "Next track!" #log this
+				win32api.keybd_event(VK_MEDIA_NEXT_TRACK, hwcode) #and send the scancode
+			elif r == "U": #if it's U for volume up...
+				if debug: print "Volume up!" #log this
+				win32api.keybd_event(VK_MEDIA_VOLUME_UP, hwcode) #and send the scancode
+			elif r == "D": #if it's D for volume down...
+				if debug: print "Volume down!" #log this
+				win32api.keybd_event(VK_MEDIA_VOLUME_DOWN, hwcode) #and send the scancode
+			elif r == "T":
+				if debug: print "Tick"
 	
 		time.sleep(1)
 		
 	avr.close_connection()
 	
 	print "Connection closed."
+	
+def update_spotify(q, avr, cur_lcd_text):
+	if debug: print "Sending command 1"
+	time.sleep(1)
+	avr.send_command("LP1%s\r\n" % cur_lcd_text['line1'])
+	if debug: print "Sending command 2"
+	time.sleep(1)
+	avr.send_command("LP2%s\r\n" % cur_lcd_text['line2'])
 	
 main()
